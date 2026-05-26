@@ -1,0 +1,17 @@
+# Build / IDE
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Publish & Installer
+publish/
+dist/
+
+# NuGet
+packages/
+
+# OS
+Thumbs.db
+Desktop.ini

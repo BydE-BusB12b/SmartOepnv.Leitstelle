@@ -1,0 +1,7 @@
+Smart-ÖPNV Leitstelle
+======================
+
+Desktop-Anwendung für die Leitstelle – gleiche Datenbasis wie der Planer
+(Import/Export, Routen, Dropbox). Live-Fahrzeugüberwachung folgt später.
+
+Systemvoraussetzungen: Windows 10/11 (64 Bit)
