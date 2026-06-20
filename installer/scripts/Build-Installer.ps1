@@ -17,7 +17,7 @@ if (-not (Test-Path $LeitstelleIcon)) {
     & (Join-Path $Root "installer\scripts\Convert-PngToIco.ps1") -PngPath $png -IcoPath $LeitstelleIcon
 }
 
-Write-Host "1/2 dotnet publish..." -ForegroundColor Yellow
+Write-Host "1/3 dotnet publish..." -ForegroundColor Yellow
 if (Test-Path $PublishDir) { Remove-Item $PublishDir -Recurse -Force }
 dotnet publish $Project -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true -p:PublishTrimmed=false -o $PublishDir
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish fehlgeschlagen" }
@@ -31,10 +31,31 @@ $Iscc = $IsccCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $Iscc) { throw "Inno Setup 6 nicht gefunden." }
 
 if (-not (Test-Path $DistDir)) { New-Item -ItemType Directory -Path $DistDir | Out-Null }
-Write-Host "2/2 Inno Setup..." -ForegroundColor Yellow
+Write-Host "2/3 Inno Setup..." -ForegroundColor Yellow
 & $Iscc $IssFile
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup Build fehlgeschlagen" }
 
 $SetupExe = Get-ChildItem $DistDir -Filter "Setup-Smart-OEPNV-Leitstelle-x64*.exe" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
+function Get-ProjectVersion {
+    param([string]$CsprojPath)
+    [xml]$doc = Get-Content -LiteralPath $CsprojPath -Encoding UTF8
+    foreach ($group in $doc.Project.PropertyGroup) {
+        if ($group.Version) {
+            return "$($group.Version)".Trim()
+        }
+    }
+    throw "Keine Version in $CsprojPath gefunden."
+}
+
+if ($SetupExe) {
+    $version = Get-ProjectVersion -CsprojPath $Project
+    $uploadScript = Join-Path (Split-Path -Parent $Root) "SmartOepnv.Shared\scripts\Upload-DistSetupToDropbox.ps1"
+    if (-not (Test-Path $uploadScript)) {
+        throw "Upload-Skript fehlt: $uploadScript"
+    }
+    & $uploadScript -SetupExePath $SetupExe.FullName -Product Leitstelle -Version $version
+}
+
 Write-Host "=== FERTIG ===" -ForegroundColor Green
 if ($SetupExe) { Write-Host "Setup: $($SetupExe.FullName)" -ForegroundColor White }
