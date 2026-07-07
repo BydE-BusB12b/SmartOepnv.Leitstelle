@@ -4,7 +4,7 @@
 #define MyAppExeName "Smart-OEPNV-Leitstelle.exe"
 #define MyAppPublisher "Smart-ÖPNV"
 #define MyAppURL "https://github.com/BydE-BusB12b/GPSAnsagen"
-#define MyAppVersion "0.3.0"
+#define MyAppVersion "0.3.1"
 
 [Setup]
 AppId={{C5F9A3B2-4D0E-5F8A-9B2C-3E6F7A0D1B4C}
@@ -41,6 +41,7 @@ Name: "launchapp"; Description: "Smart-ÖPNV Leitstelle nach der Installation st
 
 [Files]
 Source: "..\publish\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "scripts\Register-VoipPort.ps1"; DestDir: "{app}\installer"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
@@ -48,7 +49,12 @@ Name: "{group}\{#MyAppName} deinstallieren"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; WorkingDir: "{app}"
 
 [Run]
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\Register-VoipPort.ps1"""; StatusMsg: "VoIP-Port für Funk einrichten …"; Flags: runhidden waituntilterminated
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent; Tasks: launchapp
+
+[UninstallRun]
+Filename: "netsh"; Parameters: "http delete urlacl url=http://+:8787/voip/ws/"; Flags: runhidden
+Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""Smart-OEPNV VoIP"""; Flags: runhidden
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{userappdata}\Smart-OEPNV\Leitstelle"
